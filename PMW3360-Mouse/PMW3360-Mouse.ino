@@ -1,7 +1,8 @@
 #include <SPI.h>
+#include <Mouse.h>
 #include <Bounce2.h>
 
-#define NUMBTN 2
+#define numButtons 2
 
 // Registers
 #define Product_ID 0x00
@@ -57,11 +58,12 @@
 const int resetPin = 8; //Optional (not implemented)
 const int chipSelectPin = 10;
 
-bool Btns[NUMBTN] = {false, false};  //button state
+bool buttonsState[numButtons] = {false, false};
 const int mouse1 = 7;
 const int mouse2 = 5;
 //Bounce b = Bounce();
-Bounce2::Button button = Bounce2::Button();
+Bounce2::Button button1 = Bounce2::Button();
+Bounce2::Button button2 = Bounce2::Button();
 
 byte initComplete = 0;
 unsigned long lastTS;
@@ -81,13 +83,16 @@ void setup() {
   pinMode(chipSelectPin, OUTPUT);
 
   //pinMode(7, INPUT_PULLUP);
-  pinMode(5, INPUT_PULLUP);
+  //pinMode(5, INPUT_PULLUP);
 
-  button.attach(mouse1, INPUT_PULLUP);
-  //button.attach(mouse2, INPUT_PULLUP);
-  button.interval(25);  //25ms
-  button.setPressedState(LOW);
+  button1.attach(mouse1, INPUT_PULLUP);
+  button1.interval(25);  //25ms
+  button1.setPressedState(LOW);
 
+  button2.attach(mouse2, INPUT_PULLUP);
+  button2.interval(25);  //25ms
+  button2.setPressedState(LOW);
+  
   SPI.begin();
   Serial.println("ON");
   powerUp();
@@ -170,27 +175,30 @@ void loop() {
     }
     lastTS = micros();
   }
-
-  button.update(); // Update the Bounce instance
+  
+  button1.update(); // Update the Bounce instance
+  button2.update();
   //We set setPressedState to LOW in setup as the default is HIGH, so the pressed state is set when LOW.
-  if(button.isPressed() && Btns[1] == false) {
+  if(button1.isPressed() && buttonsState[0] == false) {
     Mouse.press(MOUSE_LEFT);
-    Btns[1] = true;
+    buttonsState[0] = true;
     Serial.println("BUTTON1 PRESSED BOUCE");
-  } else if(!button.isPressed() && Btns[1]) {
+  } else if(!button1.isPressed() && buttonsState[0]) {
     Mouse.release(MOUSE_LEFT);
-    Btns[1] = false;
+    buttonsState[0] = false;
     Serial.println("BUTTON1 PRESSED BOUCE RELEASE");
   }
-  //delay(1000);
-  if(digitalRead(7) == LOW) {
-    //Mouse.click(MOUSE_LEFT);
-    //Serial.println("BUTTON1 PRESSED");
+  
+  if(button2.isPressed() && buttonsState[1] == false) {
+    Mouse.press(MOUSE_RIGHT);
+    buttonsState[1] = true;
+    Serial.println("BUTTON2 PRESSED BOUCE");
+  } else if(!button2.isPressed() && buttonsState[1]) {
+    Mouse.release(MOUSE_RIGHT);
+    buttonsState[1] = false;
+    Serial.println("BUTTON2 PRESSED BOUCE RELEASE");
   }
-  if(digitalRead(5) == LOW) {
-    Serial.println("BUTTON2 PRESSED");
-  }
-
+  
   //byte mo = readReg(Motion);
   //byte dxl = readReg(Delta_X_L);
   //byte dxh = readReg(Delta_X_H);
